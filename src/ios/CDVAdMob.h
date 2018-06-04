@@ -65,6 +65,8 @@
 
 @property (assign) BOOL isTesting;
 
+@property (assign) int bottomMargin;
+
 @property (nonatomic, retain) NSDictionary* adExtras;
 
 

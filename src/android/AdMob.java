@@ -68,6 +68,7 @@ public class AdMob extends CordovaPlugin {
     private static final String OPT_IS_TESTING = "isTesting";
     private static final String OPT_AD_EXTRAS = "adExtras";
     private static final String OPT_AUTO_SHOW = "autoShow";
+    private static final String OPT_BOTTOM_MARGIN = "bottomMargin";
 
     private ViewGroup parentView;
 
@@ -91,6 +92,7 @@ public class AdMob extends CordovaPlugin {
     private boolean bannerShow = true;
     private JSONObject adExtras = null;
     private boolean autoShow = true;
+    private int bottomMargin = 0;
 
     private boolean autoShowBanner = true;
     private boolean autoShowInterstitial = true;
@@ -104,6 +106,8 @@ public class AdMob extends CordovaPlugin {
 
     String formattedDate;
 
+    private float density;
+
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -113,6 +117,8 @@ public class AdMob extends CordovaPlugin {
         
         isGpsAvailable = (GooglePlayServicesUtil.isGooglePlayServicesAvailable(cordova.getActivity()) == ConnectionResult.SUCCESS);
         Log.w(LOGTAG, String.format("isGooglePlayServicesAvailable: %s", isGpsAvailable ? "true" : "false"));
+
+        density = cordova.getActivity().getResources().getDisplayMetrics().density;
     }
 
     /**
@@ -181,16 +187,19 @@ public class AdMob extends CordovaPlugin {
 
     private void setOptions( JSONObject options ) {
         if(options == null) return;
-
-        if(options.has(OPT_PUBLISHER_ID)) this.publisherId = options.optString( OPT_PUBLISHER_ID );
-        if(options.has(OPT_INTERSTITIAL_AD_ID)) this.interstialAdId = options.optString( OPT_INTERSTITIAL_AD_ID );
-        if(options.has(OPT_AD_SIZE)) this.adSize = adSizeFromString( options.optString( OPT_AD_SIZE ) );
-        if(options.has(OPT_BANNER_AT_TOP)) this.bannerAtTop = options.optBoolean( OPT_BANNER_AT_TOP );
-        if(options.has(OPT_OVERLAP)) this.bannerOverlap = options.optBoolean( OPT_OVERLAP );
-        if(options.has(OPT_OFFSET_TOPBAR)) this.offsetTopBar = options.optBoolean( OPT_OFFSET_TOPBAR );
-        if(options.has(OPT_IS_TESTING)) this.isTesting  = options.optBoolean( OPT_IS_TESTING );
-        if(options.has(OPT_AD_EXTRAS)) this.adExtras  = options.optJSONObject( OPT_AD_EXTRAS );
-        if(options.has(OPT_AUTO_SHOW)) this.autoShow  = options.optBoolean( OPT_AUTO_SHOW );
+        try {
+            if(options.has(OPT_PUBLISHER_ID)) this.publisherId = options.optString( OPT_PUBLISHER_ID );
+            if(options.has(OPT_INTERSTITIAL_AD_ID)) this.interstialAdId = options.optString( OPT_INTERSTITIAL_AD_ID );
+            if(options.has(OPT_AD_SIZE)) this.adSize = adSizeFromString( options.optString( OPT_AD_SIZE ) );
+            if(options.has(OPT_BANNER_AT_TOP)) this.bannerAtTop = options.optBoolean( OPT_BANNER_AT_TOP );
+            if(options.has(OPT_OVERLAP)) this.bannerOverlap = options.optBoolean( OPT_OVERLAP );
+            if(options.has(OPT_OFFSET_TOPBAR)) this.offsetTopBar = options.optBoolean( OPT_OFFSET_TOPBAR );
+            if(options.has(OPT_IS_TESTING)) this.isTesting  = options.optBoolean( OPT_IS_TESTING );
+            if(options.has(OPT_AD_EXTRAS)) this.adExtras  = options.optJSONObject( OPT_AD_EXTRAS );
+            if(options.has(OPT_AUTO_SHOW)) this.autoShow  = options.optBoolean( OPT_AUTO_SHOW );
+            if(options.has(OPT_BOTTOM_MARGIN)) this.bottomMargin = options.getInt( OPT_BOTTOM_MARGIN );
+        } catch (JSONException err) {
+        }
     }
 
     /**
@@ -232,9 +241,9 @@ public class AdMob extends CordovaPlugin {
                 bannerVisible = false;
                 adView.loadAd( buildAdRequest() );
 
-                //if(autoShowBanner) {
+                if(autoShowBanner) {
                     executeShowAd(true, null);
-                //}
+                }
                 Log.w("banner", publisherId);
 
                 callbackContext.success();
@@ -421,6 +430,11 @@ public class AdMob extends CordovaPlugin {
                             RelativeLayout.LayoutParams.MATCH_PARENT,
                             RelativeLayout.LayoutParams.WRAP_CONTENT);
                         params2.addRule(bannerAtTop ? RelativeLayout.ALIGN_PARENT_TOP : RelativeLayout.ALIGN_PARENT_BOTTOM);
+
+                        if (!bannerAtTop && bottomMargin > 0) {
+                            int bottom = (int) (bottomMargin * density);
+                            params2.setMargins(0, 0, 0, bottom);
+                        }
 
                         if (adViewLayout == null) {
                             adViewLayout = new RelativeLayout(cordova.getActivity());
@@ -814,4 +828,3 @@ public class AdMob extends CordovaPlugin {
     
 
 }
-

@@ -60,7 +60,7 @@
 
 @synthesize bannerAtTop, bannerOverlap, offsetTopBar;
 
-@synthesize isTesting, adExtras;
+@synthesize isTesting, adExtras, bottomMargin;
 
 
 
@@ -94,6 +94,8 @@
 
 #define OPT_AUTO_SHOW       @"autoShow"
 
+#define OPT_BOTTOM_MARGIN   @"bottomMargin"
+
 
 
 #pragma mark Cordova JS bridge
@@ -104,27 +106,27 @@
 {
     [super pluginInitialize];
 
-if (self) {
+    if (self) {
 
-// These notifications are required for re-placing the ad on orientation
+        // These notifications are required for re-placing the ad on orientation
+        
+        // changes. Start listening for notifications here since we need to
 
-// changes. Start listening for notifications here since we need to
+        // translate the Smart Banner constants according to the orientation.
 
-// translate the Smart Banner constants according to the orientation.
+        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 
-[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+        [[NSNotificationCenter defaultCenter]
 
-[[NSNotificationCenter defaultCenter]
+         addObserver:self
 
-addObserver:self
+         selector:@selector(deviceOrientationChange:)
 
-selector:@selector(deviceOrientationChange:)
+         name:UIDeviceOrientationDidChangeNotification
 
-name:UIDeviceOrientationDidChangeNotification
+         object:nil];
 
-object:nil];
-
-}
+    }
 
     
 
@@ -145,6 +147,8 @@ object:nil];
     offsetTopBar = false;
 
     isTesting = false;
+    
+    bottomMargin = 0;
 
     
 
@@ -163,10 +167,6 @@ object:nil];
     
 
     srand((unsigned int)time(NULL));
-
-    
-
-
 }
 
 
@@ -187,7 +187,7 @@ object:nil];
 
     
 
-NSUInteger argc = [args count];
+    NSUInteger argc = [args count];
 
     if( argc >= 1 ) {
 
@@ -274,35 +274,30 @@ NSUInteger argc = [args count];
 
     NSLog(@"destroyBannerView");
 
+    CDVPluginResult *pluginResult;
+
+    NSString *callbackId = command.callbackId;
 
 
-CDVPluginResult *pluginResult;
-
-NSString *callbackId = command.callbackId;
-
-
-
-if(self.bannerView) {
+    if(self.bannerView) {
 
         [self.bannerView setDelegate:nil];
 
-[self.bannerView removeFromSuperview];
+        [self.bannerView removeFromSuperview];
 
         self.bannerView = nil;
 
-        
-
         [self resizeViews];
 
-}
+    }
 
 
 
-// Call the success callback that was passed in through the javascript.
+    // Call the success callback that was passed in through the javascript.
 
-pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
 
-[self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 
 }
 
@@ -684,7 +679,9 @@ return kGADAdSizeInvalid;
     str = [options objectForKey:OPT_AUTO_SHOW];
 
     if(str) autoShow = [str boolValue];
-
+    
+    int opth_bottom_margin = [[options objectForKey:OPT_BOTTOM_MARGIN] intValue];
+    if (opth_bottom_margin) bottomMargin = opth_bottom_margin;
 }
 
 
@@ -898,11 +895,11 @@ self.bannerIsVisible = NO;
 
     
 
-if (! self.interstitialView){
+    if (! self.interstitialView){
 
-[self __cycleInterstitial];
+        [self __cycleInterstitial];
 
-}
+    }
 
     
 
@@ -952,7 +949,7 @@ if (! self.interstitialView){
 
     
 
-if( self.bannerView ) {
+    if( self.bannerView ) {
 
         if( pr.size.width > pr.size.height ) {
 
@@ -1014,11 +1011,13 @@ if( self.bannerView ) {
 
                 wf.origin.y = top;
 
-                
-
                 if( bannerOverlap ) {
 
                     bf.origin.y = wf.size.height - bf.size.height; // banner is subview of webview
+                    
+                    if (!bannerAtTop) {
+                        bf.origin.y -= bottomMargin;
+                    };
 
                 } else {
 
@@ -1062,7 +1061,7 @@ if( self.bannerView ) {
 
 - (void)deviceOrientationChange:(NSNotification *)notification {
 
-[self resizeViews];
+    [self resizeViews];
 
 }
 
@@ -1188,34 +1187,23 @@ if( self.bannerView ) {
 
 - (void)dealloc {
 
-[[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+    [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
 
-[[NSNotificationCenter defaultCenter]
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
 
-removeObserver:self
+    bannerView_.delegate = nil;
 
-name:UIDeviceOrientationDidChangeNotification
-
-object:nil];
-
-
-
-bannerView_.delegate = nil;
-
-bannerView_ = nil;
+    bannerView_ = nil;
 
     interstitialView_.delegate = nil;
 
     interstitialView_ = nil;
 
 
-
-self.bannerView = nil;
+    self.bannerView = nil;
 
     self.interstitialView = nil;
 
 }
-
-
 
 @end

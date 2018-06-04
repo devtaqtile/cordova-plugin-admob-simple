@@ -67,7 +67,8 @@ function initAd(){
                 overlap: true, // banner will overlap webview 
                 offsetTopBar: false, // set to true to avoid ios7 status bar overlap
                 isTesting: false, // receiving test ad
-                autoShow: false // auto show interstitial ad when loaded
+                autoShow: false, // auto show interstitial ad when loaded
+                bottomMargin: 10 // margin from bottom for adds default 0
             });
 
             registerAdEvents();
