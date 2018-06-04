@@ -97,7 +97,6 @@
 #define OPT_BOTTOM_MARGIN   @"bottomMargin"
 
 
-
 #pragma mark Cordova JS bridge
 
 
@@ -149,7 +148,6 @@
     isTesting = false;
     
     bottomMargin = 0;
-
     
 
     autoShow = true;
@@ -680,8 +678,8 @@ return kGADAdSizeInvalid;
 
     if(str) autoShow = [str boolValue];
     
-    int opth_bottom_margin = [[options objectForKey:OPT_BOTTOM_MARGIN] intValue];
-    if (opth_bottom_margin) bottomMargin = opth_bottom_margin;
+    int opt_bottom_margin = [[options objectForKey:OPT_BOTTOM_MARGIN] intValue];
+    if (opt_bottom_margin) bottomMargin = opt_bottom_margin;
 }
 
 
