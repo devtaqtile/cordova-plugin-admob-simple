@@ -241,9 +241,9 @@ public class AdMob extends CordovaPlugin {
                 bannerVisible = false;
                 adView.loadAd( buildAdRequest() );
 
-                if(autoShowBanner) {
+                // if(autoShowBanner) {
                     executeShowAd(true, null);
-                }
+                // }
                 Log.w("banner", publisherId);
 
                 callbackContext.success();
