@@ -7,7 +7,8 @@
 
 #import <GoogleMobileAds/GADAdSize.h>
 
-#import <GoogleMobileAds/GADBannerView.h>
+#import <GoogleMobileAds/DFPBannerView.h>
+//#import <GoogleMobileAds/GADBannerView.h>
 
 #import <GoogleMobileAds/GADInterstitial.h>
 
@@ -36,12 +37,12 @@
 // This version of the AdMob plugin has been tested with Cordova version 2.5.0.
 
 @interface CDVAdMob : CDVPlugin <GADBannerViewDelegate, GADInterstitialDelegate> {
-
+    
 }
 
 
 
-@property(nonatomic, retain) GADBannerView *bannerView;
+@property(nonatomic, retain) DFPBannerView *bannerView;
 
 @property(nonatomic, retain) GADInterstitial *interstitialView;
 
