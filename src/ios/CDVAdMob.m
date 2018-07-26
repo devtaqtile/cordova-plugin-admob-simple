@@ -20,6 +20,8 @@
 
 - (void) __showInterstitial:(BOOL)show;
 
+- (DFPRequest*) __buildDfpRequest;
+
 - (GADRequest*) __buildAdRequest;
 
 - (NSString*) __md5: (NSString*) s;
@@ -60,7 +62,7 @@
 
 @synthesize bannerAtTop, bannerOverlap, offsetTopBar;
 
-@synthesize isTesting, adExtras, bottomMargin;
+@synthesize isTesting, adExtras, bottomMargin, location;
 
 
 
@@ -95,6 +97,8 @@
 #define OPT_AUTO_SHOW       @"autoShow"
 
 #define OPT_BOTTOM_MARGIN   @"bottomMargin"
+
+#define OPT_LOCATION        @"location"
 
 
 #pragma mark Cordova JS bridge
@@ -678,8 +682,19 @@
     
     if(str) autoShow = [str boolValue];
     
+    
     int opt_bottom_margin = [[options objectForKey:OPT_BOTTOM_MARGIN] intValue];
+    
     if (opt_bottom_margin) bottomMargin = opt_bottom_margin;
+    
+    
+    NSDictionary *locationObj = [options objectForKey:OPT_LOCATION];
+    
+    if (locationObj && locationObj.count > 0) {
+        location = locationObj;
+    } else {
+        location = nil;
+    }
 }
 
 
@@ -722,12 +737,92 @@
         
         
         
-        [self.bannerView loadRequest:[self __buildAdRequest]];
+        [self.bannerView loadRequest:[self __buildDfpRequest]];
+//        [self.bannerView loadRequest:[self __buildAdRequest]];
         
     }
     
 }
 
+
+- (DFPRequest*) __buildDfpRequest
+
+{
+    
+    DFPRequest *request = [DFPRequest request];
+    
+    
+    
+    if (self.isTesting) {
+        
+        // Make the request for a test ad. Put in an identifier for the simulator as
+        
+        // well as any devices you want to receive test ads.
+        
+        request.testDevices =
+        
+        [NSArray arrayWithObjects:
+         
+         kGADSimulatorID,
+         
+         @"1d56890d176931716929d5a347d8a206",
+         
+         // TODO: Add your device test identifiers here. They are
+         
+         // printed to the console when the app is launched.
+         
+         nil];
+        
+    }
+    
+    request = [self __appendLocationForReq: request];
+    
+    if (self.adExtras) {
+        
+        GADExtras *extras = [[GADExtras alloc] init];
+        
+        NSMutableDictionary *modifiedExtrasDict =
+        
+        [[NSMutableDictionary alloc] initWithDictionary:self.adExtras];
+        
+        [modifiedExtrasDict removeObjectForKey:@"cordova"];
+        
+        [modifiedExtrasDict setValue:@"1" forKey:@"cordova"];
+        
+        extras.additionalParameters = modifiedExtrasDict;
+        
+        [request registerAdNetworkExtras:extras];
+        
+    }
+    
+    
+    return request;
+    
+}
+
+- (DFPRequest*) __appendLocationForReq: (DFPRequest*) request {
+    if (!self.location) {
+        return request;
+    }
+    
+    double lat = 0, longitude = 0, accuracy = 0;
+    
+    @try {
+        lat = [[self.location objectForKey:@"lat"] doubleValue];
+        longitude = [[self.location objectForKey:@"long"] doubleValue];
+        accuracy = [[self.location objectForKey:@"accuracy"] doubleValue];
+    }
+    @catch(NSException *err) {
+        NSLog(@"Error: could not get double from location propery: %@", err);
+        return request;
+    }
+    
+    [request setLocationWithLatitude:lat
+                           longitude: longitude
+                            accuracy: accuracy];
+    
+    return request;
+}
 
 
 - (GADRequest*) __buildAdRequest

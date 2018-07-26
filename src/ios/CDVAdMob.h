@@ -68,6 +68,8 @@
 
 @property (assign) int bottomMargin;
 
+@property (assign) NSDictionary *location;
+
 @property (nonatomic, retain) NSDictionary* adExtras;
 
 
