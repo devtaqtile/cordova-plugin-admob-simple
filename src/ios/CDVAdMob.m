@@ -813,7 +813,7 @@
         accuracy = [[self.location objectForKey:@"accuracy"] doubleValue];
     }
     @catch(NSException *err) {
-        NSLog(@"Error: could not get double from location propery: %@", err);
+        NSLog(@"Error: could not get double from location property: %@", err);
         return request;
     }
     

@@ -1,6 +1,7 @@
 package com.cupertino.cordova.plugin;
 
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -66,6 +67,7 @@ public class AdMob extends CordovaPlugin {
     private static final String OPT_AD_EXTRAS = "adExtras";
     private static final String OPT_AUTO_SHOW = "autoShow";
     private static final String OPT_BOTTOM_MARGIN = "bottomMargin";
+    private static final String OPT_LOCATION = "location";
 
     private ViewGroup parentView;
 
@@ -91,6 +93,7 @@ public class AdMob extends CordovaPlugin {
     private JSONObject adExtras = null;
     private boolean autoShow = true;
     private int bottomMargin = 0;
+    private JSONObject location;
 
     private boolean autoShowBanner = true;
     private boolean autoShowInterstitial = true;
@@ -194,6 +197,7 @@ public class AdMob extends CordovaPlugin {
             if(options.has(OPT_AD_EXTRAS)) this.adExtras  = options.optJSONObject( OPT_AD_EXTRAS );
             if(options.has(OPT_AUTO_SHOW)) this.autoShow  = options.optBoolean( OPT_AUTO_SHOW );
             if(options.has(OPT_BOTTOM_MARGIN)) this.bottomMargin = options.getInt( OPT_BOTTOM_MARGIN );
+            if(options.has(OPT_LOCATION)) this.location = options.getJSONObject( OPT_LOCATION );
         } catch (JSONException err) {
         }
     }
@@ -203,7 +207,7 @@ public class AdMob extends CordovaPlugin {
      * view action on the UI thread.  If this request is successful, the developer
      * should make the requestAd call to request an ad for the banner.
      *
-     * @param inputs The JSONArray representing input parameters.  This function
+     * @param options The JSONArray representing input parameters.  This function
      *        expects the first object in the array to be a JSONObject with the
      *        input parameters.
      * @return A PluginResult representing whether or not the banner was created
@@ -278,7 +282,7 @@ public class AdMob extends CordovaPlugin {
      * view action on the UI thread.  If this request is successful, the developer
      * should make the requestAd call to request an ad for the banner.
      *
-     * @param inputs The JSONArray representing input parameters.  This function
+     * @param options The JSONArray representing input parameters.  This function
      *        expects the first object in the array to be a JSONObject with the
      *        input parameters.
      * @return A PluginResult representing whether or not the banner was created
@@ -347,6 +351,8 @@ public class AdMob extends CordovaPlugin {
             request_builder = request_builder.addTestDevice(deviceId).addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
         }
 
+        request_builder = appendLocationForReq(request_builder);
+
         Bundle bundle = new Bundle();
         if(adExtras != null) {
             Iterator<String> it = adExtras.keys();
@@ -364,11 +370,37 @@ public class AdMob extends CordovaPlugin {
         return request_builder.build();
     }
 
+    private PublisherAdRequest.Builder appendLocationForReq(PublisherAdRequest.Builder request) {
+        if (location == null) {
+            return  request;
+        }
+
+        double lat, longitude, accuracy;
+
+        try {
+            lat = location.getDouble("lat");
+            longitude = location.getDouble("long");
+            accuracy = location.getDouble("accuracy");
+        } catch (JSONException error) {
+            String errMessage = String.format("Could not get double from location property:: %s", error.getMessage());
+            Log.e(LOGTAG, errMessage);
+
+            return request;
+        }
+
+        Location location = new Location("js_location");
+        location.setLatitude(lat);
+        location.setLongitude(longitude);
+        location.setAccuracy((float) accuracy);
+
+        return request.setLocation(location);
+    }
+
     /**
      * Parses the request ad input parameters and runs the request ad action on
      * the UI thread.
      *
-     * @param inputs The JSONArray representing input parameters.  This function
+     * @param options The JSONArray representing input parameters.  This function
      *        expects the first object in the array to be a JSONObject with the
      *        input parameters.
      * @return A PluginResult representing whether or not an ad was requested
