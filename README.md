@@ -68,7 +68,8 @@ function initAd(){
                 offsetTopBar: false, // set to true to avoid ios7 status bar overlap
                 isTesting: false, // receiving test ad
                 autoShow: false, // auto show interstitial ad when loaded
-                bottomMargin: 10 // margin from bottom for adds default 0
+                bottomMargin: 10, // margin from bottom for adds default 0
+                location: { lat: 0, long: 0, accuracy: 0 } // set location for ads
             });
 
             registerAdEvents();
