@@ -596,7 +596,7 @@ public class AdMob extends CordovaPlugin {
     private class BannerListener extends BasicListener {
         @Override
         public void onAdLeftApplication(){
-            Log.w("banner", "clicked");
+            webView.loadUrl("javascript:cordova.fireDocumentEvent('onLeaveToAd');");
         }
         @Override
         public void onAdLoaded() {
